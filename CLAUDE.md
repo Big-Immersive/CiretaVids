@@ -255,6 +255,36 @@ Each B-roll clip should be:
 ffmpeg -y -i input.mp4 -t 3.5 -c:v libx264 -c:a aac public/video_clips/clip_trim.mp4
 ```
 
+## Fetching Footage — Pexels API
+
+**CRITICAL: Always source real footage from Pexels. Never use placeholder clips for client deliverables.**
+
+Requires `PEXELS_API_KEY` env variable (free at https://www.pexels.com/api/).
+
+```bash
+# Search for a clip
+curl -H "Authorization: $PEXELS_API_KEY" \
+  "https://api.pexels.com/videos/search?query=gold+mine+aerial&per_page=5&orientation=landscape" \
+  | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for v in d['videos']:
+    files = sorted(v['video_files'], key=lambda f: f.get('width',0), reverse=True)
+    hd = next((f for f in files if f.get('width',0) >= 1920), files[0])
+    print(v['id'], hd['link'][:100])
+"
+```
+
+For automated multi-clip download: see `docs/FOOTAGE.md` + `scripts/fetch_footage.py`.
+
+**For each new video brief:**
+1. Read the scene breakdown
+2. Identify required clips and search queries
+3. Download via Pexels API
+4. Trim to exact scene duration with ffmpeg
+5. Drop into `public/video_clips/`
+6. Update `videoFile` props in the composition file
+
 ---
 
 ## Audio Notes
