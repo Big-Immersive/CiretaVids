@@ -1,0 +1,13 @@
+node_modules/
+output/
+.next/
+dist/
+*.DS_Store
+.env
+.env.local
+
+# Keep example audio but ignore generated ones
+public/audio/vo_*.mp3
+public/audio/vo_master.mp3
+public/audio/soundtrack.mp3
+!assets/audio/
