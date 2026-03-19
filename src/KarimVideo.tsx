@@ -38,7 +38,8 @@ export const KarimVideo: React.FC = () => {
       <style>{fontStyles}</style>
 
       {/* Soundtrack — Darkest Child, Kevin MacLeod CC BY */}
-      <Audio src={staticFile("audio/karim_soundtrack.mp3")} volume={0.45} />
+      <Audio src={staticFile("audio/karim_soundtrack.mp3")} volume={0.22} />
+      <Audio src={staticFile("audio/karim_vo.mp3")} volume={1} />
 
       <div style={{ position: "absolute", inset: 0 }}>
         <Series>
@@ -47,7 +48,7 @@ export const KarimVideo: React.FC = () => {
             <OpeningScene />
           </Series.Sequence>
 
-          {/* Scene 2: Physical — gold mine aerial — Pexels ID 4295159 */}
+          {/* Scene 2: Physical — AI-generated aerial gold mine (Gemini 3 Pro, QA 4.5/5) */}
           <Series.Sequence durationInFrames={75}>
             <BRollScene
               videoFile="gold_mine_trim.mp4"
@@ -56,7 +57,7 @@ export const KarimVideo: React.FC = () => {
             />
           </Series.Sequence>
 
-          {/* Scene 3: Industrial/copper — Pexels ID 5846659 */}
+          {/* Scene 3: Industrial — AI-generated copper cathodes (Gemini 3 Pro, QA 4/5) */}
           <Series.Sequence durationInFrames={75}>
             <BRollScene
               videoFile="copper_trim.mp4"
@@ -75,8 +76,8 @@ export const KarimVideo: React.FC = () => {
             <DashboardScene />
           </Series.Sequence>
 
-          {/* Scene 6: Final logo — 0:18–0:20 = 60 frames */}
-          <Series.Sequence durationInFrames={60}>
+          {/* Scene 6: Final logo — 0:18–0:23 = 150 frames */}
+          <Series.Sequence durationInFrames={150}>
             <FinalLogoScene />
           </Series.Sequence>
         </Series>

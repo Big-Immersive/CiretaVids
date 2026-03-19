@@ -1,18 +1,6 @@
-# CiretaVids — AI Video Pipeline Guide
-> **For Claude CLI / Claude Code:** Read this entire file before writing any code or running any commands. This is the complete operating manual for the Cireta video production system.
-
----
-
-## What This Is
-
-A **Remotion-based video template system** for Cireta brand videos. Given a script/brief, you can produce a fully rendered MP4 with:
-- Animated scenes (teal brand aesthetic)
-- ElevenLabs voiceover (sequential, no rate limit hits)
-- Kevin MacLeod piano+strings soundtrack
-- 3D wireframe animation sequences (CSS 3D — no WebGL required)
-- Animated logo reveal (matching Cireta's own brand motion)
-
-**Output:** 1920×1080 MP4, 30fps, ~26 seconds, ~18-20MB
+# CiretaVids — AI Video Production Manual
+> **Read this entire file before writing any code or running commands.**
+> This is the complete operating manual for the Cireta video production system, updated with all learnings from v1–v13.
 
 ---
 
@@ -20,13 +8,53 @@ A **Remotion-based video template system** for Cireta brand videos. Given a scri
 
 | Layer | Tool | Notes |
 |-------|------|-------|
-| Video framework | `remotion` v4 | React-based video rendering |
-| 3D | CSS `perspective` + SVG | No WebGL — renders headlessly |
-| VO generation | ElevenLabs (via OpenClaw `tts` tool) | Sequential calls, convert opus→mp3 |
-| Audio mix | `ffmpeg` | Precise millisecond timing |
-| Soundtrack | Kevin MacLeod — "Impact Prelude" (CC BY) | In `assets/audio/` |
-| Fonts | Gilroy (Bold, SemiBold, Medium) | In `public/fonts/` — WOFF2 |
-| Logo | `cireta_colored_trimmed.png` | 1134×300px RGBA — icon is first 300px |
+| Video framework | Remotion v4 | React-based, renders headlessly |
+| Backgrounds | `TealBackground` + `ParticleBackground` | Copy from reference — NEVER improvise grids |
+| B-roll | AI image gen → Ken Burns ffmpeg → MP4 | When stock fails (see below) |
+| Stock footage | Pexels API + vision QA gate | Vision score ≥ 3/5 required before download |
+| VO generation | ElevenLabs via `ELEVENLABS_API_KEY` | One `curl` call for full script |
+| Audio mix | ffmpeg | Fade in/out with `-af afade` |
+| Image generation | Gemini 3 Pro Image via `nano-banana-pro` skill | Best photorealism for B-roll |
+| Soundtrack | Free from Filmmusic.io / Kevin MacLeod | Trim to exact video duration |
+| Fonts | Gilroy (Bold 700, SemiBold 600, Medium 500) | WOFF2 in `public/fonts/` |
+| Logo | `cireta_colored_trimmed.png` 1134×300px | Icon = first 300px |
+
+---
+
+## Brand Spec (DO NOT DEVIATE)
+
+| Property | Value |
+|----------|-------|
+| Primary BG | `#0d2e2c` (dark teal) |
+| Accent | `#1ef0e0` (bright teal/cyan) |
+| Secondary accent | `#1a9090` |
+| Text primary | `#ffffff` |
+| Text accent | `#1ef0e0` |
+| Final frame BG | `#000000` (black — logo on black) |
+| Font | Gilroy 700 for all headlines |
+| Letter spacing | `-0.025em` to `-0.03em` on large text |
+
+### Background — LOCKED (copy from reference, never invent)
+
+Every text scene MUST use:
+```tsx
+import { TealBackground } from "../TealBackground";
+import { ParticleBackground } from "../ParticleBackground";
+
+// Inside the scene JSX:
+<TealBackground />
+<ParticleBackground />  // default opacity={1} — never pass opacity < 1
+```
+
+**What TealBackground is:** `#0d2e2c` base + SVG `feTurbulence` fractalNoise texture (opacity 0.07) — subtle grain.
+
+**What ParticleBackground is:** 18 drifting nodes connected by lines (`strokeOpacity={0.2}`, `fillOpacity={0.4}`), slow oscillation ~10s period.
+
+**Never use:** CSS grid overlays (`backgroundImage: linear-gradient...`), custom particle divs, box patterns. These were the source of every "subtle lines" complaint.
+
+### Logo Rules
+- On **dark teal** bg: use logo as-is (coloured version)
+- On **black** bg (FinalLogoScene): `filter: "brightness(0) invert(1)"` on BOTH icon AND wordmark — otherwise invisible
 
 ---
 
@@ -36,300 +64,300 @@ A **Remotion-based video template system** for Cireta brand videos. Given a scri
 CiretaVids/
 ├── CLAUDE.md                    ← YOU ARE HERE
 ├── src/
-│   ├── Root.tsx                 ← Remotion composition root
-│   ├── CiretaVideo.tsx          ← Main composition (Series of scenes)
-│   ├── ParticleBackground.tsx   ← Reusable teal particle bg
-│   ├── TealBackground.tsx       ← Radial gradient teal bg
+│   ├── Root.tsx                 ← Remotion composition root + font declarations
+│   ├── KarimVideo.tsx           ← Karim brief composition
+│   ├── TealBackground.tsx       ← LOCKED brand background (copy from VIDEOFACTORY)
+│   ├── ParticleBackground.tsx   ← LOCKED brand particles (copy from VIDEOFACTORY)
 │   ├── BRollScene.tsx           ← B-roll video + caption overlay
 │   └── scenes/
-│       ├── HookScene.tsx        ← Opening question (white text on teal)
-│       ├── AnimatedTextScene.tsx← Star + text reveal
-│       ├── TokenScene.tsx       ← Wireframe 3D rings + fractional split
-│       ├── ClosingScene.tsx     ← Two-line closing statement
-│       └── LogoEndCard.tsx      ← Animated logo reveal (star→icon→wordmark)
+│       ├── OpeningScene.tsx     ← Opening statement
+│       ├── VerifiedScene.tsx    ← 3-beat: Verified / Insured / Tokenized
+│       ├── DashboardScene.tsx   ← Stats dashboard mockup
+│       └── FinalLogoScene.tsx   ← Logo animation (matches signed-off reference)
 ├── public/
 │   ├── fonts/                   ← Gilroy WOFF2 files
-│   ├── imgs/                    ← Logo PNGs
-│   ├── audio/                   ← soundtrack.mp3 + vo_master.mp3
-│   └── video_clips/             ← B-roll MP4s
-├── assets/                      ← Source copies of all assets
+│   ├── imgs/                    ← cireta_colored_trimmed.png
+│   ├── audio/                   ← karim_soundtrack.mp3 + karim_vo.mp3
+│   └── video_clips/             ← B-roll MP4s + source PNGs
+├── scripts/
+│   ├── fetch_footage.py         ← Pexels + vision QA gate
+│   └── gen_broll.py             ← AI image gen → Ken Burns pipeline (TODO)
 └── docs/
+    ├── FOOTAGE.md               ← Footage sourcing guide
     ├── SCENES.md                ← Scene-by-scene breakdown
-    └── VOICE.md                 ← VO script template
+    └── VOICE.md                 ← VO script + pronunciation guide
 ```
 
 ---
 
-## Brand Spec
+## Karim Brief — Scene Breakdown (23s @ 30fps = 690 frames)
 
-| Property | Value |
-|----------|-------|
-| Primary BG | `#0d2e2c` (dark teal) |
-| Accent | `#1ef0e0` (bright teal/cyan) |
-| Secondary accent | `#1a9090` |
-| Text primary | `#ffffff` |
-| Text secondary | `#2a9b8a` |
-| End card BG | `#ffffff` |
-| Font | Gilroy (Bold 700, SemiBold 600, Medium 500) |
-| Logo icon ratio | First 300px of 1134px-wide PNG |
+| Scene | Frames | Duration | Component | Status |
+|-------|--------|----------|-----------|--------|
+| 1 Opening | 0–90 | 3s | `OpeningScene` | ✅ |
+| 2 B-Roll: Gold Mine | 90–165 | 2.5s | `BRollScene` — gold_mine_trim.mp4 | ✅ AI gen |
+| 3 B-Roll: Copper | 165–240 | 2.5s | `BRollScene` — copper_trim.mp4 | ✅ AI gen |
+| 4 Verified/Insured/Tokenized | 240–420 | 6s | `VerifiedScene` (3 beats × 2s) | ✅ |
+| 5 Dashboard | 420–540 | 4s | `DashboardScene` | ✅ |
+| 6 Final Logo | 540–690 | 5s | `FinalLogoScene` | ✅ |
 
 ---
 
-## Composition Structure (Default 26s @ 30fps = 780 frames)
+## Making a New Video — Complete Workflow
 
-| Scene | Frames | Duration | Component |
-|-------|--------|----------|-----------|
-| 1 Hook | 0–89 | 3s | `HookScene` |
-| 2 B-Roll 1 | 90–179 | 3s | `BRollScene` |
-| 3 B-Roll 2 | 180–299 | 4s | `BRollScene` |
-| 4 B-Roll 3 | 300–389 | 3s | `BRollScene` |
-| 5 B-Roll 4 | 390–449 | 2s | `BRollScene` |
-| 6 Token/3D | 450–629 | 6s | `TokenScene` |
-| 7 Closing | 630–719 | 3s | `ClosingScene` |
-| 8 Logo | 720–779 | 2s | `LogoEndCard` |
+### Step 0: Read the Brief Properly
 
----
+Extract exact visual requirements per scene BEFORE writing any code:
+- What does each B-roll shot need to SHOW?
+- What must it NOT be? (e.g. "aerial gold mine" ≠ limestone quarry)
+- What's the client's brand colour, font, logo animation?
 
-## Making a New Video — Step by Step
+### Step 1: Create Composition
 
-### 1. Write the VO Script
+Copy `KarimVideo.tsx` as a starting point. Update:
+- Scene durations in `Series.Sequence durationInFrames`
+- Total frames in `Root.tsx` `durationInFrames`
+- VO and soundtrack audio paths
 
-Map each line to a scene. The VO runs as a single pre-mixed audio track (`vo_master.mp3`). Lines are placed at exact frame start times.
+### Step 2: Source B-Roll (CRITICAL PATH)
 
-```
-Line 1 → frame 0    (HookScene, 3s max)
-Line 2 → frame 90   (B-Roll 1, 3s max)
-Line 3 → frame 180  (B-Roll 2, 4s max)
-Line 4 → frame 300  (B-Roll 3, 3s max)
-Line 5 → frame 390  (B-Roll 4, 2s max)
-Line 6 → frame 450  (TokenScene, 6s max)
-Line 7 → frame 630  (ClosingScene, 3s max)
-```
-
-Keep lines SHORT — each must fit in the scene window. Punchy, confident, no filler.
-
-### 2. Generate VO with ElevenLabs (Sequential)
-
-**CRITICAL: Call tts tool ONE AT A TIME. Never parallel — hits rate limits.**
-
+**Option A — Pexels (try first):**
 ```bash
-# After each tts call, convert opus → mp3:
-ffmpeg -y -i /tmp/openclaw/tts-XXXXX/voice-XXXXX.opus \
-  -ar 44100 -ac 2 \
-  public/audio/vo_01.mp3
-
-# Check duration:
-ffprobe -v quiet -show_entries format=duration -of csv=p=0 public/audio/vo_01.mp3
-```
-
-Repeat for each line (vo_01.mp3 through vo_07.mp3).
-
-### 3. Mix VO into Master Track
-
-Use the Python ffmpeg script to place each line at its exact timestamp:
-
-```python
-import subprocess
-
-audio_dir = "public/audio"
-# (filename, start_time_seconds) — match to frame/30
-segments = [
-    ("vo_01.mp3", 0.0),   # frame 0
-    ("vo_02.mp3", 3.0),   # frame 90
-    ("vo_03.mp3", 6.0),   # frame 180
-    ("vo_04.mp3", 10.0),  # frame 300
-    ("vo_05.mp3", 13.0),  # frame 390
-    ("vo_06.mp3", 15.0),  # frame 450
-    ("vo_07.mp3", 21.0),  # frame 630
-]
-total_duration = 26.0
-
-inputs = []
-filter_parts = []
-for i, (fname, start) in enumerate(segments):
-    inputs += ["-i", f"{audio_dir}/{fname}"]
-    filter_parts.append(f"[{i}]adelay={int(start*1000)}|{int(start*1000)}[a{i}]")
-
-mix_inputs = "".join(f"[a{i}]" for i in range(len(segments)))
-filter_parts.append(f"{mix_inputs}amix=inputs={len(segments)}:normalize=0[out]")
-
-cmd = ["ffmpeg", "-y", *inputs,
-       "-filter_complex", ";".join(filter_parts),
-       "-map", "[out]", "-t", str(total_duration),
-       "-ar", "44100", "-ac", "2",
-       f"{audio_dir}/vo_master.mp3"]
-subprocess.run(cmd)
-```
-
-### 4. Prepare Soundtrack
-
-The default soundtrack is "Impact Prelude" by Kevin MacLeod (CC BY).
-**Attribution required:** "Impact Prelude" Kevin MacLeod (incompetech.com) Licensed under Creative Commons: By Attribution 4.0
-
-```bash
-ffmpeg -y -i assets/audio/soundtrack_impact_prelude.mp3 \
-  -t 26 \
-  -af "afade=t=out:st=23:d=3,volume=0.38,loudnorm=I=-18:LRA=7:TP=-2" \
-  -ar 44100 -ac 2 \
-  public/audio/soundtrack.mp3
-```
-
-Adjust `volume=0.38` to taste (0.22 = quieter, 0.5 = louder).
-
-### 5. Update Scene Content
-
-Edit the relevant scene files in `src/scenes/`:
-
-**HookScene.tsx** — change the opening question text
-**BRollScene** props in `CiretaVideo.tsx` — change captions + video files
-**TokenScene.tsx** — the 3D wireframe scene (usually keep as-is)
-**ClosingScene.tsx** — change the two closing lines
-**LogoEndCard.tsx** — do NOT change (locked brand animation)
-
-### 6. Render
-
-```bash
-npm install
-npx remotion render src/Root.tsx CiretaVideo output/cireta-final.mp4 --concurrency=4
-```
-
-**Note:** `--concurrency=4` is optimal for M-series Mac. Increase to 8 for more cores.
-**Note:** Do NOT use `--gl=swiftshader` — not needed (no WebGL used).
-
----
-
-## The LogoEndCard Animation (LOCKED — Do Not Change)
-
-This exactly replicates Cireta's own brand motion from their official video (21-26s).
-
-**Sequence:**
-1. Teal → white flash (4 frames)
-2. Tiny dot appears at center
-3. Scales up into 4-pointed star with 45° rotation
-4. Rotates to 0° as it morphs into the icon mark
-5. Icon slides left (frames 18-34)
-6. Wordmark wipes in left→right (frames 26-42)
-7. Final lockup holds
-
-**Logo geometry:**
-- PNG is 1134×300px
-- Icon = first 300px width (ICON_RATIO = 300/1134)
-- Display height = 100px → display width = 378px total
-- Icon display = 100px, Wordmark display = 278px
-
----
-
-## TokenScene (Wireframe 3D) — Customisation
-
-The 3D scene uses pure SVG + CSS perspective (no WebGL). Key parameters:
-
-```tsx
-// In TokenScene.tsx
-const R1x = 700;  // primary ring horizontal radius
-const R1y = 260;  // primary ring vertical radius (squished = perspective)
-const SLICES = 8; // number of fractional arc segments
-
-// Timing:
-// frames 0-30:  rings materialise
-// frames 45-95: explode into fragments  
-// frames 100-130: text fades in
-```
-
-To change the concept (e.g. show a property being split vs a coin):
-- Update the `FragmentArc` labels (currently shows "1/8")
-- Update `TextOverlay` copy
-- Adjust ring radii for different visual weight
-
----
-
-## B-Roll Requirements
-
-Each B-roll clip should be:
-- MP4, H.264
-- Minimum 1080p
-- 3-4 seconds (trim with ffmpeg before adding)
-- Visually matches the caption (real assets, industrial, financial)
-
-```bash
-# Trim a clip to exact duration:
-ffmpeg -y -i input.mp4 -t 3.5 -c:v libx264 -c:a aac public/video_clips/clip_trim.mp4
-```
-
-## Fetching Footage — Pexels API (MANDATORY VISION QA GATE)
-
-**CRITICAL RULE: A search result is not usable footage. Every clip MUST pass visual QA before download.**
-
-**DO NOT:** Search → download first result → use. This WILL produce wrong footage.
-**DO:** Search → score thumbnails against brief → download only clips scoring ≥ 3/5 → if none pass, STOP and flag.
-
-Requires:
-- `PEXELS_API_KEY` env variable (free at https://www.pexels.com/api/)
-- `OPENROUTER_API_KEY` for automated vision scoring (uses `google/gemini-2.0-flash-001`)
-
-### The Vision QA Gate (enforced in fetch_footage.py)
-
-For each clip candidate:
-1. Download thumbnail image
-2. Run vision model with the exact brief criteria
-3. Score 1-5 against criteria
-4. **Only proceed if score ≥ 3**
-5. If nothing scores ≥ 3 → print FOOTAGE GATE FAILED → exit 1 → **do NOT render**
-
-```bash
-# Run the full pipeline with QA gate:
-export PEXELS_API_KEY="your_key"
-export OPENROUTER_API_KEY="your_key"
+export PEXELS_API_KEY="..."
+export OPENROUTER_API_KEY="..."
 python3 scripts/fetch_footage.py
 ```
+The QA gate will reject anything scoring < 3/5. If it fails → Option B.
 
-### When the Gate Fails
-- Check `/tmp/footage_thumbs/` — thumbnails saved for manual review
-- Try different search queries (edit `CLIPS` list in `fetch_footage.py`)
-- If Pexels has nothing suitable: source from Getty/Shutterstock/client's own footage
-- **Never render with placeholder clips for a client deliverable**
+**Option B — AI Image Generation (preferred fallback):**
+```bash
+SKILL_DIR="/opt/homebrew/lib/node_modules/openclaw/skills/nano-banana-pro"
 
-### For each new video brief:
-1. Read the full scene breakdown — extract exact visual requirements for each B-roll
-2. Write precise `brief_criteria` strings (what it MUST show, what it must NOT be)
-3. Run `fetch_footage.py` — let the QA gate decide
-4. If gate fails → escalate, do not substitute
-5. Update `videoFile` props in composition after QA passes
+uv run $SKILL_DIR/scripts/generate_image.py \
+  --prompt "YOUR PROMPT HERE" \
+  --filename "output.png" \
+  --resolution 2K \
+  --aspect-ratio 16:9
+```
+
+Then run vision QA on the generated image before converting to video:
+```python
+# Vision check (informal — use image tool):
+# "Rate 1-5 for use as [brief description] B-roll in a premium brand video"
+# Minimum 3/5 to proceed
+```
+
+Then Ken Burns → MP4:
+```bash
+# Zoom in (epic reveal):
+ffmpeg -y -loop 1 -i image.png \
+  -vf "scale=8000:-1,zoompan=z='zoom+0.0012':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=75:s=1920x1080:fps=30" \
+  -t 2.5 -c:v libx264 -pix_fmt yuv420p \
+  public/video_clips/clip_trim.mp4
+
+# Pan left→right:
+ffmpeg -y -loop 1 -i image.png \
+  -vf "scale=8000:-1,zoompan=z='1.08':x='if(lte(on,1),iw/2-iw/zoom/2,x+0.8)':y='ih/2-(ih/zoom/2)':d=75:s=1920x1080:fps=30" \
+  -t 2.5 -c:v libx264 -pix_fmt yuv420p \
+  public/video_clips/clip_trim.mp4
+
+# Slow push in:
+ffmpeg -y -loop 1 -i image.png \
+  -vf "scale=8000:-1,zoompan=z='min(zoom+0.001,1.15)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=75:s=1920x1080:fps=30" \
+  -t 2.5 -c:v libx264 -pix_fmt yuv420p \
+  public/video_clips/clip_trim.mp4
+```
+
+**Note:** `d=75` = 2.5s @ 30fps. Adjust for your scene duration.
+
+### Step 3: AI Image Generation — Prompting Guide
+
+Model: **Gemini 3 Pro Image** via `nano-banana-pro` skill.
+
+**Prompt formula:**
+```
+[Shot type + subject] + [Lighting/time of day] + [Specific details that make it authentic] + [Mood/feel] + [Technical spec if needed]
+```
+
+**Examples that scored 4-5/5:**
+
+| Subject | Prompt that worked |
+|---------|-------------------|
+| Aerial gold mine | `"Photorealistic aerial drone photograph of a vast open-pit gold mine at sunrise. Golden hour light raking across terraced rock faces, warm orange and amber tones, long dramatic shadows. Haul trucks tiny against epic scale. Dust catching first light. Cinematic, dramatic, shot from 400m altitude at 45 degree angle. Western Australia red laterite geology."` |
+| Copper cathodes | `"Photorealistic close-up photograph of stacked copper cathode plates in an industrial warehouse. Rows of flat rectangular copper sheets with characteristic pinkish-orange metallic surface and rough crystalline texture. Dramatic side lighting creating shadows between plates. Premium industrial quality, high contrast, sharp detail."` |
+| Gold bars | `"Photorealistic close-up photograph of gold bullion bars. Focus on surface texture, warm metallic glow, genuine reflections and micro-scratches on the surface. Abstract framing — no serial numbers or branding visible, just the rich golden surface and weight of the metal. Dramatic directional lighting, shallow depth of field, cinematic quality. Several bars stacked, warm amber light."` |
+
+**What NOT to do:**
+- Don't ask for serial numbers/branding → will be fake and visible → credibility risk
+- Don't ask for specific refinery names ("Swiss Bank", "LBMA") → AI invents them wrong
+- Do ask for "no text", "no branding", "abstract framing" for close-up product shots
+- Always use `--resolution 2K --aspect-ratio 16:9` for B-roll
+
+**Always vision-check before converting to video:**
+Use the `image` tool with: `"Rate 1-5 for [brief criteria]. Does it look photorealistic? Any credibility issues?"`
+
+### Step 4: Generate VO
+
+Single curl call for the full script. Use ElevenLabs Charlotte voice:
+```bash
+curl -s -X POST "https://api.elevenlabs.io/v1/text-to-speech/XB0fDUnXU5powFXDhCwa" \
+  -H "xi-api-key: $ELEVENLABS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "YOUR FULL SCRIPT HERE",
+    "model_id": "eleven_multilingual_v2",
+    "voice_settings": {
+      "stability": 0.45,
+      "similarity_boost": 0.82,
+      "style": 0.3,
+      "use_speaker_boost": true
+    }
+  }' \
+  -o /tmp/vo_raw.mp3
+
+ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 /tmp/vo_raw.mp3
+```
+
+Then add fade in/out:
+```bash
+ffmpeg -y -i /tmp/vo_raw.mp3 \
+  -af "afade=t=in:st=0:d=0.3,afade=t=out:st=XX:d=0.7" \
+  -c:a libmp3lame -b:a 128k \
+  public/audio/vo.mp3
+```
+(Replace XX with `duration - 0.8`)
+
+**Pronunciation — Cireta brand name:** `"Sireta"` in the text → ElevenLabs says it correctly as "Si-REE-tah". Do NOT use "Si-ret-ah" or "Seeretah" spellings — they produce wrong results. Just write `Sireta` naturally.
+
+**If pronunciation is off on a single line:** Splice instead of re-doing the full VO:
+```bash
+# 1. Generate just the problem line with corrected phonetic spelling
+# 2. Trim original up to the cut point: ffmpeg -y -i full_vo.mp3 -t CUT_SECONDS body.mp3
+# 3. Concat: ffmpeg -y -i body.mp3 -i new_line.mp3 -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1" output.mp3
+```
+
+### Step 5: Soundtrack
+
+Trim soundtrack to exact video duration, duck under VO:
+```bash
+ffmpeg -y -i source_track.mp3 \
+  -t VIDEO_DURATION_SECONDS \
+  -af "afade=t=out:st=FADE_START:d=3,volume=0.22" \
+  -c:a libmp3lame -b:a 128k \
+  public/audio/soundtrack.mp3
+```
+- `volume=0.22` when VO present (VO takes priority)
+- `volume=0.45` when no VO
+
+Wire into composition:
+```tsx
+<Audio src={staticFile("audio/soundtrack.mp3")} volume={0.22} />
+<Audio src={staticFile("audio/vo.mp3")} volume={1} />
+```
+
+### Step 6: TypeScript Check
+
+```bash
+./node_modules/.bin/tsc --noEmit
+```
+Must be clean before render.
+
+### Step 7: Render
+
+```bash
+# 16:9 (1920×1080)
+npx remotion render src/Root.tsx CompositionId output/video-16x9.mp4 --concurrency=4
+
+# 1:1 (1080×1080) — update Root.tsx width/height before render
+npx remotion render src/Root.tsx CompositionId-1x1 output/video-1x1.mp4 --concurrency=4
+
+# 9:16 (1080×1920)
+npx remotion render src/Root.tsx CompositionId-9x16 output/video-9x16.mp4 --concurrency=4
+```
 
 ---
 
-## Audio Notes
+## The FinalLogoScene Animation (LOCKED)
 
-- ElevenLabs voice used: **Charlotte** (voice ID: `XB0fDUnXU5powFXDhCwa`) — British, young, warm
-- For a more authoritative/male tone, use **Adam** or **Antoni**
-- Always call `tts` tool sequentially — parallel calls hit rate limits
-- Always convert from `.opus` → `.mp3` via ffmpeg before use in Remotion
+Exact replication of Cireta's signed-off brand motion. DO NOT change the timing.
+
+| Phase | Frames | What happens |
+|-------|--------|-------------|
+| 1 | 0–4 | Black bg appears |
+| 2 | 4–22 | Icon scales from dot: 0→1.08 (spring overshoot), settles at 1.0 |
+| 3 | 4–22 | Icon rotates 45°→0° simultaneously |
+| 4 | 18–34 | Icon slides left from screen centre (960px) to lockup position (821px) |
+| 5 | 26–42 | Wordmark `clipPath` wipes in left→right |
+| 6 | 38–52 | Tagline "Own What's Real." fades in below |
+| 7 | 135–150 | Full fade out |
+
+**Logo geometry (1134×300px PNG):**
+```
+LOGO_DISPLAY_H = 100px
+LOGO_DISPLAY_W = 378px  (1134/300 × 100)
+ICON_DISPLAY_W = 100px  (300/1134 × 378)
+WORDMARK_LEFT  = 960 - 189 + 100 = 871px
+```
+
+**On black background:** BOTH icon and wordmark need `filter: "brightness(0) invert(1)"`. Missing this = invisible logo.
 
 ---
 
-## Common Errors
+## The VerifiedScene — 3-Beat Structure
 
-| Error | Fix |
-|-------|-----|
-| WebGL context failed | Don't use `@remotion/three` ThreeCanvas — use CSS 3D/SVG instead |
-| Audio out of sync | Check ffprobe duration of each VO clip, adjust segment start times |
-| Font not loading | Ensure WOFF2 files are in `public/fonts/` and `@font-face` is declared in `CiretaVideo.tsx` |
-| Logo misaligned | `ICON_RATIO = 300/1134` — recalculate if using a different logo crop |
-| `No entry point specified` | Always use `npx remotion render src/Root.tsx CiretaVideo output/file.mp4` |
+Each beat is 60 frames (2s). Icon draws itself, then word fades in with subtitle.
+
+| Beat | Word | Icon | Subtitle |
+|------|------|------|---------|
+| 0–60 | Verified. | Animated checkmark in circle | "Third-party audited" |
+| 60–120 | Insured. | Shield outline draws itself | "Fully covered assets" |
+| 120–180 | Tokenized. | Hexagon assembles + T symbol | "On-chain. Always." |
+
+"Tokenized." is the only word in teal (`#1ef0e0`). The others are white.
 
 ---
 
-## File Checklist Before Render
+## Common Mistakes & Fixes
 
-- [ ] `public/audio/vo_master.mp3` — mixed VO track
-- [ ] `public/audio/soundtrack.mp3` — trimmed soundtrack
-- [ ] `public/video_clips/*.mp4` — all B-roll clips present
-- [ ] `public/fonts/Gilroy-*.woff2` — all 3 weights
-- [ ] `public/imgs/cireta_colored_trimmed.png` — logo PNG
+| Mistake | Fix |
+|---------|-----|
+| Grid lines visible | Remove all `backgroundImage: linear-gradient` — use `TealBackground` + `ParticleBackground` only |
+| Logo invisible on black bg | Add `filter: "brightness(0) invert(1)"` to BOTH icon and wordmark `<Img>` |
+| Wrong B-roll footage | Never download first Pexels result — run vision QA gate first. For niche industrial (gold mines, copper cathodes) — Pexels is almost always wrong. Go straight to AI gen. |
+| AI gen gold bars have fake serial numbers | Add "no serial numbers, no branding visible, abstract framing" to prompt |
+| ffmpeg concat runs forever | Never use `anullsrc` without explicit `-t` duration limit |
+| Brand name mispronounced | Write "Sireta" (not "Si-ret-ah" or "Seeretah") in ElevenLabs text |
+| ParticleBackground too faint | Never pass `opacity < 1` — default is correct; the lines are intentionally subtle at full opacity |
+| TypeScript errors on render | Always run `./node_modules/.bin/tsc --noEmit` first |
+| Composition ID has underscore | Remotion doesn't allow underscores in IDs — use hyphens (`KarimVideo-16x9`) |
+
+---
+
+## Stock Footage Reality Check
+
+| Platform | Good for | Terrible for |
+|----------|----------|-------------|
+| Pexels (free) | Lifestyle, nature, urban, generic business | Niche industrial (mines, refineries, specific metals) |
+| Coverr (free) | Same limitations as Pexels | Same |
+| Artgrid (~$200/yr) | Cinematic everything | Cost |
+| Pond5 (per clip ~$50) | Specific industrial, niche subjects | Cost per clip |
+| **AI gen (free)** | **When brief requires niche industrial — use this first** | Scenes requiring real people, logos, text |
+
+**Rule of thumb:** If the brief says "aerial [specific location/industry]" or "[specific product close-up]" — skip Pexels entirely and go straight to AI image gen.
+
+---
+
+## Audio Checklist Before Render
+
+- [ ] `public/audio/karim_soundtrack.mp3` — trimmed to video duration, fades out
+- [ ] `public/audio/karim_vo.mp3` — VO with fade in/out, correct brand name pronunciation
+- [ ] Verify with `ffprobe -v error -show_entries format=duration ...` — check for corrupted files (>50MB MP3 = corrupt)
+- [ ] Both wired into composition with correct volumes (VO=1, music=0.22)
 
 ---
 
 ## Attribution
 
-Music: "Impact Prelude" by Kevin MacLeod (incompetech.com)  
-Licensed under Creative Commons: By Attribution 4.0 License  
-http://creativecommons.org/licenses/by/4.0/
+Soundtrack: "Covert Affair" sourced from Filmmusic.io
+ElevenLabs voice: Charlotte (`XB0fDUnXU5powFXDhCwa`) — British, confident, warm
+B-roll: AI-generated via Gemini 3 Pro Image (Google)

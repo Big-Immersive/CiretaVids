@@ -5,6 +5,8 @@
  */
 import React from "react";
 import { useCurrentFrame, interpolate, useVideoConfig } from "remotion";
+import { TealBackground } from "../TealBackground";
+import { ParticleBackground } from "../ParticleBackground";
 
 const CLAMP = { extrapolateLeft: "clamp" as const, extrapolateRight: "clamp" as const };
 
@@ -48,7 +50,6 @@ export const DashboardScene: React.FC = () => {
   return (
     <div style={{
       position: "absolute", inset: 0,
-      backgroundColor: "#0d2e2c",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
@@ -56,15 +57,8 @@ export const DashboardScene: React.FC = () => {
       justifyContent: "center",
       gap: 40,
     }}>
-      {/* Grid bg */}
-      <div style={{
-        position: "absolute", inset: 0,
-        backgroundImage: `
-          linear-gradient(rgba(30,240,224,0.06) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30,240,224,0.06) 1px, transparent 1px)
-        `,
-        backgroundSize: "90px 90px",
-      }} />
+      <TealBackground />
+      <ParticleBackground />
 
       {/* Dashboard panel */}
       <div style={{
