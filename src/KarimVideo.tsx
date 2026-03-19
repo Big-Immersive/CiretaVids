@@ -47,21 +47,19 @@ export const KarimVideo: React.FC = () => {
             <OpeningScene />
           </Series.Sequence>
 
-          {/* Scene 2: Physical — gold — 0:03–0:05.5 = 75 frames
-              NOTE: Replace gold_trim.mp4 with aerial gold mine footage */}
+          {/* Scene 2: Physical — gold mine aerial — Pexels ID 4295159 */}
           <Series.Sequence durationInFrames={75}>
             <BRollScene
-              videoFile="gold_trim.mp4"
+              videoFile="gold_mine_trim.mp4"
               caption="PHYSICAL."
               durationInFrames={75}
             />
           </Series.Sequence>
 
-          {/* Scene 3: Physical — copper/industrial — 0:05.5–0:08 = 75 frames
-              NOTE: Replace furnace_trim.mp4 with copper cathode warehouse footage */}
+          {/* Scene 3: Industrial/copper — Pexels ID 5846659 */}
           <Series.Sequence durationInFrames={75}>
             <BRollScene
-              videoFile="furnace_trim.mp4"
+              videoFile="copper_trim.mp4"
               caption="REAL RESERVES."
               durationInFrames={75}
             />

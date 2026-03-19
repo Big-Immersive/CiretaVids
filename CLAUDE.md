@@ -255,35 +255,45 @@ Each B-roll clip should be:
 ffmpeg -y -i input.mp4 -t 3.5 -c:v libx264 -c:a aac public/video_clips/clip_trim.mp4
 ```
 
-## Fetching Footage — Pexels API
+## Fetching Footage — Pexels API (MANDATORY VISION QA GATE)
 
-**CRITICAL: Always source real footage from Pexels. Never use placeholder clips for client deliverables.**
+**CRITICAL RULE: A search result is not usable footage. Every clip MUST pass visual QA before download.**
 
-Requires `PEXELS_API_KEY` env variable (free at https://www.pexels.com/api/).
+**DO NOT:** Search → download first result → use. This WILL produce wrong footage.
+**DO:** Search → score thumbnails against brief → download only clips scoring ≥ 3/5 → if none pass, STOP and flag.
+
+Requires:
+- `PEXELS_API_KEY` env variable (free at https://www.pexels.com/api/)
+- `OPENROUTER_API_KEY` for automated vision scoring (uses `google/gemini-2.0-flash-001`)
+
+### The Vision QA Gate (enforced in fetch_footage.py)
+
+For each clip candidate:
+1. Download thumbnail image
+2. Run vision model with the exact brief criteria
+3. Score 1-5 against criteria
+4. **Only proceed if score ≥ 3**
+5. If nothing scores ≥ 3 → print FOOTAGE GATE FAILED → exit 1 → **do NOT render**
 
 ```bash
-# Search for a clip
-curl -H "Authorization: $PEXELS_API_KEY" \
-  "https://api.pexels.com/videos/search?query=gold+mine+aerial&per_page=5&orientation=landscape" \
-  | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-for v in d['videos']:
-    files = sorted(v['video_files'], key=lambda f: f.get('width',0), reverse=True)
-    hd = next((f for f in files if f.get('width',0) >= 1920), files[0])
-    print(v['id'], hd['link'][:100])
-"
+# Run the full pipeline with QA gate:
+export PEXELS_API_KEY="your_key"
+export OPENROUTER_API_KEY="your_key"
+python3 scripts/fetch_footage.py
 ```
 
-For automated multi-clip download: see `docs/FOOTAGE.md` + `scripts/fetch_footage.py`.
+### When the Gate Fails
+- Check `/tmp/footage_thumbs/` — thumbnails saved for manual review
+- Try different search queries (edit `CLIPS` list in `fetch_footage.py`)
+- If Pexels has nothing suitable: source from Getty/Shutterstock/client's own footage
+- **Never render with placeholder clips for a client deliverable**
 
-**For each new video brief:**
-1. Read the scene breakdown
-2. Identify required clips and search queries
-3. Download via Pexels API
-4. Trim to exact scene duration with ffmpeg
-5. Drop into `public/video_clips/`
-6. Update `videoFile` props in the composition file
+### For each new video brief:
+1. Read the full scene breakdown — extract exact visual requirements for each B-roll
+2. Write precise `brief_criteria` strings (what it MUST show, what it must NOT be)
+3. Run `fetch_footage.py` — let the QA gate decide
+4. If gate fails → escalate, do not substitute
+5. Update `videoFile` props in composition after QA passes
 
 ---
 

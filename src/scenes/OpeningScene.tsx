@@ -36,7 +36,7 @@ export const OpeningScene: React.FC = () => {
   return (
     <div style={{
       position: "absolute", inset: 0,
-      backgroundColor: "#000000",
+      backgroundColor: "#050f0e",  // Very dark teal — almost black, keeps brand DNA
       overflow: "hidden",
       display: "flex",
       alignItems: "center",
@@ -63,7 +63,7 @@ export const OpeningScene: React.FC = () => {
       {/* Radial vignette */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.75) 100%)",
+        background: "radial-gradient(ellipse at center, transparent 35%, rgba(5,15,14,0.8) 100%)",
       }} />
 
       {/* Centred text */}

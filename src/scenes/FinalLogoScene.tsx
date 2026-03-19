@@ -41,7 +41,7 @@ export const FinalLogoScene: React.FC = () => {
   return (
     <div style={{
       position: "absolute", inset: 0,
-      backgroundColor: "#000000",
+      backgroundColor: "#000000",  // Brief: black bg for final frame
       display: "flex",
       flexDirection: "column",
       alignItems: "center",

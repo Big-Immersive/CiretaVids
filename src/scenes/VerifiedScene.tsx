@@ -53,7 +53,7 @@ export const VerifiedScene: React.FC = () => {
   return (
     <div style={{
       position: "absolute", inset: 0,
-      backgroundColor: "#060f0e",
+      backgroundColor: "#0d2e2c",
       overflow: "hidden",
       display: "flex",
       alignItems: "center",
@@ -64,7 +64,7 @@ export const VerifiedScene: React.FC = () => {
         <defs>
           <radialGradient id="vGlow" cx="50%" cy="50%" r="45%">
             <stop offset="0%" stopColor="#1a8080" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#060f0e" stopOpacity="0" />
+            <stop offset="100%" stopColor="#0d2e2c" stopOpacity="0" />
           </radialGradient>
         </defs>
 

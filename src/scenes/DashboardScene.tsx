@@ -48,7 +48,7 @@ export const DashboardScene: React.FC = () => {
   return (
     <div style={{
       position: "absolute", inset: 0,
-      backgroundColor: "#06100f",
+      backgroundColor: "#0d2e2c",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
@@ -60,8 +60,8 @@ export const DashboardScene: React.FC = () => {
       <div style={{
         position: "absolute", inset: 0,
         backgroundImage: `
-          linear-gradient(rgba(30,240,224,0.035) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30,240,224,0.035) 1px, transparent 1px)
+          linear-gradient(rgba(30,240,224,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(30,240,224,0.06) 1px, transparent 1px)
         `,
         backgroundSize: "90px 90px",
       }} />
